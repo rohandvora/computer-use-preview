@@ -22,7 +22,7 @@ from ..computer import (
 )
 import playwright.sync_api
 from playwright.sync_api import sync_playwright
-from typing import Literal
+from typing import Literal, Optional
 
 # Define a mapping from the user-friendly key names to Playwright's expected key names.
 # Playwright is generally good with case-insensitivity for these, but it's best to be canonical.
@@ -81,11 +81,14 @@ class PlaywrightComputer(Computer):
         initial_url: str = "https://www.google.com",
         search_engine_url: str = "https://www.google.com",
         highlight_mouse: bool = False,
+        user_data_dir: Optional[str] = None,
     ):
         self._initial_url = initial_url
         self._screen_size = screen_size
         self._search_engine_url = search_engine_url
         self._highlight_mouse = highlight_mouse
+        self._user_data_dir = user_data_dir
+        self._persistent_context = user_data_dir is not None
 
     def _handle_new_page(self, new_page: playwright.sync_api.Page):
         """The Computer Use model only supports a single tab at the moment.
@@ -100,8 +103,8 @@ class PlaywrightComputer(Computer):
     def __enter__(self):
         print("Creating session...")
         self._playwright = sync_playwright().start()
-        self._browser = self._playwright.chromium.launch(
-            args=[
+        args = (
+            [
                 "--disable-extensions",
                 "--disable-file-system",
                 "--disable-plugins",
@@ -111,8 +114,19 @@ class PlaywrightComputer(Computer):
                 "--disable-sync",
                 # No '--no-sandbox' arg means the sandbox is on.
             ],
-            headless=bool(os.environ.get("PLAYWRIGHT_HEADLESS", False)),
         )
+        headless = bool(os.environ.get("PLAYWRIGHT_HEADLESS", False))
+        if self._persistent_context:
+            self._browser = self._playwright.chromium.launch_persistent_context(
+                user_data_dir=self._user_data_dir,
+                args=args,
+                headless=headless,
+            )
+        else:
+            self._browser = self._playwright.chromium.launch(
+                args=args,
+                headless=headless,
+            )
         self._context = self._browser.new_context(
             viewport={
                 "width": self._screen_size[0],

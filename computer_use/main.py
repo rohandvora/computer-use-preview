@@ -14,8 +14,8 @@
 import argparse
 import os
 
-from agent import BrowserAgent
-from computers import BrowserbaseComputer, PlaywrightComputer
+from .agent import BrowserAgent
+from .computers import BrowserbaseComputer, PlaywrightComputer
 
 
 PLAYWRIGHT_SCREEN_SIZE = (1440, 900)
@@ -51,7 +51,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--model",
-        default='gemini-2.5-computer-use-preview-10-2025',
+        default="gemini-2.5-computer-use-preview-10-2025",
         help="Set which main model to use.",
     )
     args = parser.parse_args()
@@ -64,8 +64,7 @@ def main() -> int:
         )
     elif args.env == "browserbase":
         env = BrowserbaseComputer(
-            screen_size=PLAYWRIGHT_SCREEN_SIZE,
-            initial_url=args.initial_url
+            screen_size=PLAYWRIGHT_SCREEN_SIZE, initial_url=args.initial_url
         )
     else:
         raise ValueError("Unknown environment: ", args.env)

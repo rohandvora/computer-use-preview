@@ -16,8 +16,9 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 from google.genai import types
-from agent import BrowserAgent, multiply_numbers
-from computers import EnvState
+from computer_use.agent import BrowserAgent, multiply_numbers
+from computer_use.computers import EnvState
+
 
 class TestBrowserAgent(unittest.TestCase):
     def setUp(self):
@@ -27,7 +28,7 @@ class TestBrowserAgent(unittest.TestCase):
         self.agent = BrowserAgent(
             browser_computer=self.mock_browser_computer,
             query="test query",
-            model_name="test_model"
+            model_name="test_model",
         )
         # Mock the genai client
         self.agent._client = MagicMock()
@@ -46,7 +47,9 @@ class TestBrowserAgent(unittest.TestCase):
         self.mock_browser_computer.click_at.assert_called_once_with(x=100, y=200)
 
     def test_handle_action_type_text_at(self):
-        action = types.FunctionCall(name="type_text_at", args={"x": 100, "y": 200, "text": "hello"})
+        action = types.FunctionCall(
+            name="type_text_at", args={"x": 100, "y": 200, "text": "hello"}
+        )
         self.agent.handle_action(action)
         self.mock_browser_computer.type_text_at.assert_called_once_with(
             x=100, y=200, text="hello", press_enter=False, clear_before_typing=True
@@ -58,9 +61,13 @@ class TestBrowserAgent(unittest.TestCase):
         self.mock_browser_computer.scroll_document.assert_called_once_with("down")
 
     def test_handle_action_navigate(self):
-        action = types.FunctionCall(name="navigate", args={"url": "https://example.com"})
+        action = types.FunctionCall(
+            name="navigate", args={"url": "https://example.com"}
+        )
         self.agent.handle_action(action)
-        self.mock_browser_computer.navigate.assert_called_once_with("https://example.com")
+        self.mock_browser_computer.navigate.assert_called_once_with(
+            "https://example.com"
+        )
 
     def test_handle_action_unknown_function(self):
         action = types.FunctionCall(name="unknown_function", args={})
@@ -73,7 +80,7 @@ class TestBrowserAgent(unittest.TestCase):
     def test_denormalize_y(self):
         self.assertEqual(self.agent.denormalize_y(500), 500)
 
-    @patch('agent.BrowserAgent.get_model_response')
+    @patch("computer_use.agent.BrowserAgent.get_model_response")
     def test_run_one_iteration_no_function_calls(self, mock_get_model_response):
         mock_response = MagicMock()
         mock_candidate = MagicMock()
@@ -87,12 +94,16 @@ class TestBrowserAgent(unittest.TestCase):
         self.assertEqual(len(self.agent._contents), 2)
         self.assertEqual(self.agent._contents[1], mock_candidate.content)
 
-    @patch('agent.BrowserAgent.get_model_response')
-    @patch('agent.BrowserAgent.handle_action')
-    def test_run_one_iteration_with_function_call(self, mock_handle_action, mock_get_model_response):
+    @patch("computer_use.agent.BrowserAgent.get_model_response")
+    @patch("computer_use.agent.BrowserAgent.handle_action")
+    def test_run_one_iteration_with_function_call(
+        self, mock_handle_action, mock_get_model_response
+    ):
         mock_response = MagicMock()
         mock_candidate = MagicMock()
-        function_call = types.FunctionCall(name="navigate", args={"url": "https://example.com"})
+        function_call = types.FunctionCall(
+            name="navigate", args={"url": "https://example.com"}
+        )
         mock_candidate.content.parts = [types.Part(function_call=function_call)]
         mock_response.candidates = [mock_candidate]
         mock_get_model_response.return_value = mock_response

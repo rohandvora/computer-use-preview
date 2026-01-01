@@ -28,7 +28,7 @@ import time
 from rich.console import Console
 from rich.table import Table
 
-from computers import EnvState, Computer
+from .computers import EnvState, Computer
 
 MAX_RECENT_TURN_WITH_SCREENSHOTS = 3
 PREDEFINED_COMPUTER_USE_FUNCTIONS = [
